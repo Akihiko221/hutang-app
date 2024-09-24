@@ -1,16 +1,28 @@
 @extends('layouts.content')
 
 @section('content')
-    <section class="py-20">
-        <div class="container mx-auto">
-
+    <section class="py-10 md:py-20">
+        <div class="container mx-auto px-4">
             <!-- Grid untuk membagi menjadi dua bagian: List Hutang di kiri dan Total di kanan -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+
+                <!-- Bagian Kanan: Total Hutang -->
+                <div class="order-1 lg:order-2">
+                    <h3 class="text-xl md:text-2xl font-bold text-blue-500 mb-4 text-center">Total Hutang</h3>
+                    <div
+                        class="p-4 md:p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:scale-105">
+                        <div id="total-hutang"
+                            class="text-2xl md:text-3xl font-bold text-blue-500 mb-4 text-center md:text-left">
+                            Rp. {{ number_format($totalHutang, 0, ',', '.') }}
+                        </div>
+                        <p class="text-blue-600 text-center md:text-left">Total hutang Anda yang tersisa.</p>
+                    </div>
+                </div>
 
                 <!-- Bagian Kiri: List Hutang -->
-                <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-2xl font-bold text-blue-500">Daftar Hutang</h3>
+                <div class="lg:col-span-2 order-2 lg:order-1">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                        <h3 class="text-xl md:text-2xl font-bold text-blue-500 text-center md:text-left">Daftar Hutang</h3>
                         <button onclick="openModal('addDebtModal')"
                             class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105">
                             Tambah Hutang +
@@ -18,25 +30,41 @@
                     </div>
                     <div class="space-y-4">
                         @foreach ($debts as $debt)
-                            <div class="p-6 bg-white rounded-lg shadow-lg flex justify-between items-center">
-                                <div>
-                                    <h4 class="text-xl font-bold text-blue-500">{{ $debt->creditor }}</h4>
+                            <div
+                                class="p-4 md:p-6 bg-white rounded-lg shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center">
+                                <div class="mb-4 md:mb-0">
+                                    <h4 class="text-lg md:text-xl font-semibold text-blue-500">{{ $debt->creditor }} <span
+                                            class="font-bold">- {{ $debt->nama_barang }}</span></h4>
                                     <p class="mt-2 text-blue-600">Rp. {{ number_format($debt->amount, 0, ',', '.') }} -
-                                        Jatuh
-                                        tempo: {{ $debt->due_date }}</p>
+                                        Jatuh tempo: {{ $debt->due_date }}</p>
                                     <p class="mt-2 text-{{ $debt->status ? 'green' : 'red' }}-500">Status:
                                         {{ $debt->status ? 'Lunas' : 'Belum Lunas' }}</p>
                                 </div>
 
-                                <div class="flex space-x-4">
+                                <div class="flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-4 items-center">
+                                    <!-- Tombol Mark as Paid -->
+                                    @if (!$debt->status)
+                                        <form action="{{ route('hutang.markAsPaid', $debt->id) }}" method="POST"
+                                            onsubmit="return confirm('Yakin ingin menandai hutang ini sebagai lunas?');">
+                                            @csrf
+                                            <button type="submit" class="text-green-500 hover:text-green-700">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
+
                                     <!-- Tombol Edit -->
                                     <button
                                         onclick="openEditModal({{ $debt->id }}, '{{ $debt->creditor }}', '{{ $debt->nama_barang }}', {{ $debt->amount }}, '{{ $debt->due_date }}', {{ $debt->status ? 'true' : 'false' }})"
                                         class="text-blue-500 hover:text-blue-700">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M11 5h2M12 5v14m7-7H5" />
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                         </svg>
                                     </button>
 
@@ -49,29 +77,18 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.137 21H7.863a2 2 0 01-1.996-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a2 2 0 012-2h4a2 2 0 012 2m-6 0h6" />
+                                                    d="M19 7l-.867 12.142A2 2 0 0 1 16.137 21H7.863a2 2 0 0 1-1.996-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2m-6 0h6" />
                                             </svg>
                                         </button>
                                     </form>
                                 </div>
                             </div>
                         @endforeach
-                    </div>
-                </div>
 
-                <!-- Bagian Kanan: Total Hutang -->
-                <div>
-                    <h3 class="text-2xl font-bold text-blue-500 mb-4 text-center">Total Hutang</h3>
-                    <div
-                        class="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:scale-105">
-                        <div id="total-hutang" class="text-3xl font-bold text-blue-500 mb-4">
-                            Rp. {{ number_format($totalHutang, 0, ',', '.') }}
+                        <!-- Pagination Links -->
+                        <div class="mt-4">
+                            {{ $debts->links() }}
                         </div>
-                        <p class="text-blue-600">Total hutang Anda yang tersisa.</p>
-                        <a href="{{ route('hutang.total') }}"
-                            class="mt-6 inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-110">
-                            Lihat Detail
-                        </a>
                     </div>
                 </div>
             </div>
@@ -80,9 +97,10 @@
 
     <!-- Modal Tambah Hutang -->
     <div id="addDebtModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden modal">
-        <div class="bg-white rounded-lg shadow-lg w-1/3 p-6 transform transition-all duration-300 scale-95 opacity-0">
+        <div
+            class="bg-white rounded-lg shadow-lg w-full md:w-1/2 lg:w-1/3 p-6 transform transition-all duration-300 scale-95 opacity-0 mx-4">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-blue-500">Tambah Hutang</h3>
+                <h3 class="text-lg md:text-xl font-semibold text-blue-500">Tambah Hutang</h3>
                 <button onclick="closeModal('addDebtModal')" class="text-gray-500 hover:text-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2">
@@ -133,9 +151,10 @@
     <!-- Modal Edit Hutang -->
     <div id="editDebtModal"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden modal">
-        <div class="bg-white rounded-lg shadow-lg w-1/3 p-6 transform transition-all duration-300 scale-95 opacity-0">
+        <div
+            class="bg-white rounded-lg shadow-lg w-full md:w-1/2 lg:w-1/3 p-6 transform transition-all duration-300 scale-95 opacity-0 mx-4">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-blue-500">Edit Hutang</h3>
+                <h3 class="text-lg md:text-xl font-semibold text-blue-500">Edit Hutang</h3>
                 <button onclick="closeModal('editDebtModal')" class="text-gray-500 hover:text-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2">
@@ -192,6 +211,7 @@
             </form>
         </div>
     </div>
+
 
     <!-- JavaScript untuk modal dan validasi -->
     <script>

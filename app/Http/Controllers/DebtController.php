@@ -9,8 +9,11 @@ class DebtController extends Controller
 {
     public function index()
     {
-        $debts = Debt::all();
-        $totalHutang = $debts->sum('amount');
+        $debts = Debt::orderBy('status', 'asc') // Status false (0) akan di atas, true (1) di bawah
+                    ->orderBy('created_at', 'desc') // Urutkan dari yang terbaru ke yang lama
+                    ->paginate(5);
+        $totalDebt = Debt::where('status', false)->get();
+        $totalHutang = $totalDebt->sum('amount');
         return view('hutang.index', compact('debts', 'totalHutang'));
     }
 
